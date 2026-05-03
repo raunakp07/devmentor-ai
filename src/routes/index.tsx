@@ -5,7 +5,7 @@ import { PERSONAS, type PersonaId } from "@/lib/personas";
 import { PersonaSidebar } from "@/components/PersonaSidebar";
 import { ChatMessage, TypingIndicator, type ChatMsg } from "@/components/ChatMessage";
 import { AboutDialog } from "@/components/AboutDialog";
-import { chatWithGroq } from "@/server/chat.functions";
+import { chatWithGroq } from "@/lib/chat.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
