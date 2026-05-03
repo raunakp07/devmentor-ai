@@ -1,16 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
-import { env } from "cloudflare:workers";
-import process from "node:process";
 import { z } from "zod";
 
 const GROQ_ENV = "GROQ_API_KEY";
 
-/** Runtime secrets: Cloudflare `env` + `process.env` (populated when `nodejs_compat_populate_process_env` is on). */
-function groqApiKey(): string | undefined {
-  const fromCf = (env as Record<string, unknown>)[GROQ_ENV];
-  if (typeof fromCf === "string" && fromCf.length > 0) return fromCf;
+/** Local dev: `process.env` (from `.env.local`). Production Worker: `cloudflare:workers` `env` + populated `process.env`. */
+async function groqApiKey(): Promise<string | undefined> {
   const fromProcess = process.env[GROQ_ENV];
   if (typeof fromProcess === "string" && fromProcess.length > 0) return fromProcess;
+  try {
+    const { env } = await import(/* @vite-ignore */ "cloudflare:workers");
+    const fromCf = (env as Record<string, unknown>)[GROQ_ENV];
+    if (typeof fromCf === "string" && fromCf.length > 0) return fromCf;
+  } catch {
+    /* not running under workerd / vite dependency scan */
+  }
   return undefined;
 }
 
@@ -27,7 +30,7 @@ const InputSchema = z.object({
 export const chatWithGroq = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = groqApiKey();
+    const apiKey = await groqApiKey();
     if (!apiKey) {
       return { error: "GROQ_API_KEY is not configured.", reply: null };
     }
