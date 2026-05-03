@@ -3,6 +3,8 @@ import { env } from "cloudflare:workers";
 import { z } from "zod";
 
 const GROQ_ENV = "GROQ_API_KEY";
+const MISSING_GROQ_KEY =
+  "GROQ_API_KEY is not configured on this deployment. Add it as a Cloudflare Worker secret.";
 
 /** Dev: `process.env` from `.env.local`. Worker: Cloudflare `env` and/or `process.env` (nodejs_compat_populate_process_env). */
 function groqApiKey(): string | undefined {
@@ -28,7 +30,7 @@ export const chatWithGroq = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const apiKey = groqApiKey();
     if (!apiKey) {
-      return { error: "GROQ_API_KEY is not configured.", reply: null };
+      return { error: MISSING_GROQ_KEY, reply: null };
     }
 
     try {
@@ -41,10 +43,7 @@ export const chatWithGroq = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           temperature: 0.7,
-          messages: [
-            { role: "system", content: data.systemPrompt },
-            ...data.messages,
-          ],
+          messages: [{ role: "system", content: data.systemPrompt }, ...data.messages],
         }),
       });
 
