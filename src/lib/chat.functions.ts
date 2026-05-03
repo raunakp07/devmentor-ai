@@ -1,5 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { env } from "cloudflare:workers";
 import { z } from "zod";
+
+/** Cloudflare Worker secrets/bindings use `env`; local Node dev uses `process.env`. */
+function groqApiKey(): string | undefined {
+  const cf = env as { GROQ_API_KEY?: string };
+  return cf.GROQ_API_KEY ?? process.env.GROQ_API_KEY;
+}
 
 const MessageSchema = z.object({
   role: z.enum(["system", "user", "assistant"]),
@@ -14,7 +21,7 @@ const InputSchema = z.object({
 export const chatWithGroq = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = groqApiKey();
     if (!apiKey) {
       return { error: "GROQ_API_KEY is not configured.", reply: null };
     }
