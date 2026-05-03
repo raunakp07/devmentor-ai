@@ -1,11 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { env } from "cloudflare:workers";
+import process from "node:process";
 import { z } from "zod";
 
-/** Cloudflare Worker secrets/bindings use `env`; local Node dev uses `process.env`. */
+const GROQ_ENV = "GROQ_API_KEY";
+
+/** Runtime secrets: Cloudflare `env` + `process.env` (populated when `nodejs_compat_populate_process_env` is on). */
 function groqApiKey(): string | undefined {
-  const cf = env as { GROQ_API_KEY?: string };
-  return cf.GROQ_API_KEY ?? process.env.GROQ_API_KEY;
+  const fromCf = (env as Record<string, unknown>)[GROQ_ENV];
+  if (typeof fromCf === "string" && fromCf.length > 0) return fromCf;
+  const fromProcess = process.env[GROQ_ENV];
+  if (typeof fromProcess === "string" && fromProcess.length > 0) return fromProcess;
+  return undefined;
 }
 
 const MessageSchema = z.object({
