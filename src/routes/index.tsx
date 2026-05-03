@@ -52,7 +52,10 @@ function Index() {
       const res = await chatFn({
         data: { systemPrompt: persona.systemPrompt, messages: next },
       });
-      if (res.error || !res.reply) {
+      if (!res) {
+        console.error("chatFn returned undefined", res);
+        toast.error("No response from server");
+      } else if (res.error || !res.reply) {
         toast.error(res.error ?? "No response");
       } else {
         setMessages([...next, { role: "assistant", content: res.reply }]);
