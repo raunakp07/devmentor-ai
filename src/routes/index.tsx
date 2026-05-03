@@ -59,7 +59,10 @@ function Index() {
       }
     } catch (e) {
       console.error(e);
-      toast.error("Something went wrong. Try again.");
+      const raw = e instanceof Error ? e.message : "Something went wrong. Try again.";
+      const msg =
+        import.meta.env.DEV || raw.length <= 160 ? raw : "Something went wrong. Try again.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
